@@ -27,18 +27,12 @@ if args.dna_server:
 # callback for printing all messages in human-readable YAML format.
 #node.add_handler(None, lambda msg: print(dronecan.to_yaml(msg)))
 
-# callback for printing vesc data
-#node.add_handler(dronecan.thirdparty.vesc.RTData, lambda msg: print(dronecan.to_yaml(msg)))
-#node.add_handler(dronecan.thirdparty.vesc.RTData, lambda msg: print(msg))
+# get the dyno power and set throttle
 def get_dyno_power(event):
-    # print(args.dyno_node_id)
-    # print(type(event.transfer.source_node_id))
     if event.transfer.source_node_id == args.dyno_node_id:
-        #print(dronecan.to_yaml(event))
         dynopower = float(str(event.transfer.payload._fields["curr_in"]))*float(str(event.transfer.payload._fields["volt_in"]))
         print(f'Dyno Power:{dynopower}')
         publish_throttle_setpoint(dynopower)
-        #return dynopower
 
 last_run_time = None
 integrator = 0.
@@ -53,7 +47,6 @@ def publish_throttle_setpoint(dynopower):
     #     node.broadcast(message)
     #     print(dronecan.to_yaml(message))
 
-    # Generating a sine wave
     rpm_setpoint = 5000
     # Commanding ESC with indices 0, 1, 2, 3 only
     kp = 10000
@@ -75,19 +68,8 @@ def publish_throttle_setpoint(dynopower):
     dynopower_filtered += (dynopower-dynopower_filtered)*0.025
     print(dynopower_filtered, dronecan.to_yaml(message))
 
-
-
-# TODO:
-# we need to implement a PID controller on the output of the dyno vesc, when test vesc is running, to adjust current on the test vesc motor in order to keep the dyno power output at a set value (e.g 100W)
-# SP (setpoint) = e.g 100W
-# PV (process value)
-# CO (controller output)
-# MV (manipulated variable)
-# FCE (final control element)
-
+# add get_dyno_power callback to handler
 node.add_handler(dronecan.thirdparty.vesc.RTData, get_dyno_power)
-#node.periodic(0.01,publish_throttle_setpoint)
-#node_monitor.get()
 
 # Running the node until the application is terminated or until first error.
 try:
