@@ -17,6 +17,7 @@ node_info = uavcan.protocol.GetNodeInfo.Response()
 node_info.name = 'org.kha.dynodemo'
 
 node = dronecan.make_node(args.port,node_id=args.node_id,node_info=node_info)
+node.mode = uavcan.protocol.NodeStatus().MODE_OPERATIONAL
 
 node_monitor = dronecan.app.node_monitor.NodeMonitor(node)
 
@@ -31,7 +32,7 @@ if args.dna_server:
 def get_dyno_power(event):
     if event.transfer.source_node_id == args.dyno_node_id:
         dynopower = float(str(event.transfer.payload._fields["curr_in"]))*float(str(event.transfer.payload._fields["volt_in"]))
-        print(f'Dyno Power:{dynopower}')
+        #print(f'Dyno Power: {dynopower}')
         publish_throttle_setpoint(dynopower)
 
 last_run_time = None
