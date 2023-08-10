@@ -42,9 +42,10 @@ def get_dyno_power(event):
 
 last_run_time = None
 integrator = 0.
+dynopower_filtered = 0.
 # Publishing setpoint values from this function; it is invoked periodically from the node thread.
 def publish_throttle_setpoint(dynopower):
-    global last_run_time, integrator
+    global last_run_time, integrator, dynopower_filtered
     # if args.send_safety:
     #     # optionally send safety off messages. These are needed for some ESCs
     #     message = dronecan.ardupilot.indication.SafetyState()
@@ -53,10 +54,10 @@ def publish_throttle_setpoint(dynopower):
     #     print(dronecan.to_yaml(message))
 
     # Generating a sine wave
-    rpm_setpoint = 1000
+    rpm_setpoint = 5000
     # Commanding ESC with indices 0, 1, 2, 3 only
-    kp = 20
-    ki = 100.0
+    kp = 10000
+    ki = 500000.0
     dynopower_target = -20
     dynopower_error = dynopower_target-dynopower
     tnow = time.monotonic()
@@ -66,12 +67,14 @@ def publish_throttle_setpoint(dynopower):
         dt = tnow-last_run_time
     last_run_time = tnow
     integrator += ki*dt*dynopower_error
-    current_setpoint = kp*dynopower_error
-    commands = [int(round(rpm_setpoint)), int(round(-(current_setpoint+integrator))), 0, 0]
+    current_setpoint = (kp*dynopower_error + integrator)/rpm_setpoint
+    commands = [int(round(rpm_setpoint)), int(round(-current_setpoint)), 0, 0]
     message = dronecan.uavcan.equipment.esc.RawCommand(cmd=commands)
     node.broadcast(message)
     # display the message on the console in human readable format
-    print(dronecan.to_yaml(message))
+    dynopower_filtered += (dynopower-dynopower_filtered)*0.025
+    print(dynopower_filtered, dronecan.to_yaml(message))
+
 
 
 # TODO:
