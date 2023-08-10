@@ -1,4 +1,4 @@
 # VESC Dronecan
 
 ## Description
-Communicate with VESC via Pydronecan
+Communicate and control VESC with pydronecan
